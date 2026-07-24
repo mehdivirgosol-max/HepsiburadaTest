@@ -1,0 +1,15 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false"
+                 name="Hepsiburada E2E"
+                 type="Application"
+                 factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="com.virgosol.HepsiburadaTestLauncher" />
+    <module name="HepsiburadaTest" />
+    <option name="VM_PARAMETERS"
+            value="-Dfile.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

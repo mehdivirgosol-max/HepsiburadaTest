@@ -1,0 +1,32 @@
+# Güvenli şekilde Hepsiburada hesabına giriş yap
+
+* Tarayıcıyı aç
+* Hepsiburada ana sayfasına git
+* Hesabım alanını aç
+* Giriş yap bağlantısına tıkla
+* Ortam değişkenlerindeki giriş bilgilerini kontrollü hızla doldur
+* Giriş yap düğmesine tıkla
+* Giriş işleminin başarılı olduğunu doğrula
+
+# <aranan> ara ve ikinci satırdaki ilk ürünü aç
+
+* Arama alanını aç
+* <aranan> metnini ara
+* <aranan> arama sonuçlarının geldiğini doğrula
+* İkinci satırın birinci sütunundaki ürüne kaydır ve başlık bağlantısına tıkla
+* Ürün detay sayfasını kaydedilen ürün kodu veya adıyla doğrula
+
+# Açılan ürünü sepete ekle ve onayı doğrula
+
+* Detay sayfasındaki Sepete Ekle düğmesine tıkla
+* Sepete ekleme bildirimini doğrula ve raporla
+
+# Kaydedilen ürünü sepette doğrula
+
+* Sayfanın en üstüne çık ve header Sepetim alanına tıkla
+* Sepetin boş olmadığını ve kaydedilen ürünü içerdiğini doğrula
+* Sepeti gözlem için "3" saniye açık tut
+
+# Testin eklediği ürünü kaldır ve sepeti önceki durumuna döndür
+
+* Testin eklediği ürünü kaldır ve sepet sayısını başlangıç değerine döndür

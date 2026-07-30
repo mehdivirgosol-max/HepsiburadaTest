@@ -14,8 +14,6 @@ public final class HepsiburadaTestLauncher {
         requireEnvironmentVariable("HB_PASSWORD");
 
         Path projectRoot = findProjectRoot();
-        System.out.println("[BİLGİ] Hepsiburada Gauge testi IntelliJ üzerinden başlatılıyor.");
-        System.out.println("[BİLGİ] Çalışma dizini: " + projectRoot);
 
         ProcessBuilder processBuilder = new ProcessBuilder(
                 "cmd.exe",
@@ -32,8 +30,6 @@ public final class HepsiburadaTestLauncher {
                 System.err.println(
                         "[HATA] Hepsiburada Gauge testi başarısız oldu. Çıkış kodu: " + exitCode
                 );
-            } else {
-                System.out.println("[BAŞARILI] Hepsiburada Gauge testi tamamlandı.");
             }
             System.exit(exitCode);
         } catch (IOException exception) {

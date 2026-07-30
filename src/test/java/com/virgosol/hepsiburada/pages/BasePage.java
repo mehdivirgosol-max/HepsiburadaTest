@@ -25,6 +25,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.virgosol.hepsiburada.locators.HepsiburadaLocators.Common.COOKIE_ACCEPT_CONTROLS;
+
 public abstract class BasePage {
     private static final String FIND_SHADOW_COOKIE_ACCEPT_CONTROL = """
             const roots = [document];
@@ -64,22 +66,6 @@ public abstract class BasePage {
             }
             return null;
             """;
-    private static final List<By> COOKIE_ACCEPT_CONTROLS = List.of(
-            By.id("hb-accept-all"),
-            By.id("onetrust-accept-btn-handler"),
-            By.cssSelector("button[data-test-id='cookie-consent-accept']"),
-            By.cssSelector("button[aria-label='Tüm çerezleri kabul et']"),
-            By.cssSelector("input[type='button'][value='Kabul Et']"),
-            By.xpath(
-                    "//*[self::button or self::a or @role='button']["
-                            + "normalize-space()='Tümünü kabul et' "
-                            + "or normalize-space()='Tümünü Kabul Et' "
-                            + "or normalize-space()='Kabul et' "
-                            + "or normalize-space()='Kabul Et' "
-                            + "or normalize-space()='Tüm Çerezleri Kabul Et']"
-            )
-    );
-
     protected final WebDriver driver;
     protected final TestConfig config;
     protected final JavascriptExecutor javascript;
@@ -108,7 +94,19 @@ public abstract class BasePage {
     }
 
     protected WebElement waitUntilClickable(By... locators) {
-        return waitFor(config.timeout(), "Tıklanabilir öğe bulunamadı", webDriver -> {
+        return waitUntilClickable(
+                config.timeout(),
+                "Tıklanabilir öğe bulunamadı",
+                locators
+        );
+    }
+
+    protected WebElement waitUntilClickable(
+            Duration duration,
+            String failureMessage,
+            By... locators
+    ) {
+        return waitFor(duration, failureMessage, webDriver -> {
             for (By locator : locators) {
                 for (WebElement element : webDriver.findElements(locator)) {
                     try {
@@ -154,26 +152,54 @@ public abstract class BasePage {
     }
 
     protected void click(WebElement element, By... refindLocators) {
-        scrollIntoView(element);
+        performClick(element, true, refindLocators);
+    }
+
+    /**
+     * Görünür durumdaki bir öğeyi sayfanın mevcut scroll konumunu değiştirmeden tıklar.
+     */
+    protected void clickWithoutScrolling(By... locators) {
+        WebElement element = waitUntilClickable(locators);
+        performClick(element, false, locators);
+    }
+
+    private void performClick(
+            WebElement element,
+            boolean scrollBeforeClick,
+            By... refindLocators
+    ) {
+        if (scrollBeforeClick) {
+            scrollIntoView(element);
+        }
         try {
             element.click();
             return;
         } catch (ElementClickInterceptedException exception) {
             acceptCookiePreferencesIfPresent();
+            if (refindLocators.length > 0) {
+                element = waitUntilClickable(refindLocators);
+            }
         } catch (StaleElementReferenceException exception) {
             if (refindLocators.length == 0) {
                 throw exception;
             }
             element = waitUntilClickable(refindLocators);
+        }
+
+        if (scrollBeforeClick) {
             scrollIntoView(element);
         }
 
         try {
-            new Actions(driver)
-                    .moveToElement(element)
-                    .pause(Duration.ofMillis(100))
-                    .click()
-                    .perform();
+            if (scrollBeforeClick) {
+                new Actions(driver)
+                        .moveToElement(element)
+                        .pause(Duration.ofMillis(100))
+                        .click()
+                        .perform();
+            } else {
+                element.click();
+            }
         } catch (RuntimeException actionsFailure) {
             javascript.executeScript("arguments[0].click();", element);
         }
@@ -213,21 +239,29 @@ public abstract class BasePage {
                 .perform();
     }
 
-    protected void scrollToTop() {
-        javascript.executeScript("window.scrollTo({top: 0, behavior: 'instant'});");
-        waitFor(Duration.ofSeconds(3), "Sayfanın en üstüne çıkılamadı", webDriver -> {
-            Object value = javascript.executeScript(
-                    "return Math.max(window.scrollY || 0, document.documentElement.scrollTop || 0);"
-            );
-            return value instanceof Number number && number.longValue() <= 5 ? true : null;
-        });
-    }
-
     protected void waitForDocumentReady() {
         waitFor(config.timeout(), "Sayfa yüklenmesi tamamlanmadı", webDriver -> {
             Object state = javascript.executeScript("return document.readyState;");
             return "interactive".equals(state) || "complete".equals(state) ? true : null;
         });
+    }
+
+    protected void waitForDocumentComplete() {
+        waitFor(config.timeout(), "Sayfanın tam yüklenmesi tamamlanmadı", webDriver -> {
+            Object state = javascript.executeScript("return document.readyState;");
+            return "complete".equals(state) ? true : null;
+        });
+    }
+
+    protected void pause(Duration duration) {
+        if (duration.isNegative()) {
+            throw new IllegalArgumentException("Bekleme süresi negatif olamaz.");
+        }
+        if (!duration.isZero()) {
+            new Actions(driver)
+                    .pause(duration)
+                    .perform();
+        }
     }
 
     protected boolean acceptCookiePreferencesIfPresent() {
@@ -277,7 +311,6 @@ public abstract class BasePage {
                 webDriver -> findCookieAcceptControl() == null ? true : null,
                 COOKIE_ACCEPT_CONTROLS.toArray(By[]::new)
         );
-        System.out.println("[BİLGİ] Çerez tercihleri kabul edildi.");
         return true;
     }
 
@@ -353,15 +386,6 @@ public abstract class BasePage {
         return new ArrayList<>(unique);
     }
 
-    protected void observeForSeconds(int seconds) {
-        if (seconds < 0 || seconds > 10) {
-            throw new IllegalArgumentException("Gözlem süresi 0 ile 10 saniye arasında olmalıdır.");
-        }
-        new Actions(driver)
-                .pause(Duration.ofSeconds(seconds))
-                .perform();
-    }
-
     protected String sanitizedCurrentUrl() {
         String url;
         try {
@@ -411,7 +435,11 @@ public abstract class BasePage {
                 .filter(token -> token.length() >= 3)
                 .collect(Collectors.toSet());
         long overlap = leftTokens.stream().filter(rightTokens::contains).count();
-        int required = Math.min(3, Math.min(leftTokens.size(), rightTokens.size()));
-        return required > 0 && overlap >= required;
+        int smallerTokenCount = Math.min(leftTokens.size(), rightTokens.size());
+        int required = Math.max(
+                4,
+                (int) Math.ceil(smallerTokenCount * 0.75)
+        );
+        return smallerTokenCount > 0 && overlap >= required;
     }
 }

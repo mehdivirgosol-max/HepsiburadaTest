@@ -10,31 +10,16 @@ import org.openqa.selenium.interactions.Actions;
 import java.net.URI;
 import java.time.Duration;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-public final class LoginPage extends BasePage {
-    private static final By EMAIL = By.id("txtUserName");
-    private static final By PASSWORD = By.id("txtPassword");
-    private static final By LOGIN_BUTTON = By.id("btnLogin");
-    private static final List<By> SECURITY_CHALLENGES = List.of(
-            By.cssSelector("[data-test-id*='captcha']"),
-            By.cssSelector("iframe[src*='captcha']"),
-            By.xpath("//*[contains(normalize-space(.), 'Güvenlik doğrulaması')]"),
-            By.xpath("//*[contains(normalize-space(.), 'doğrulama kodu')]")
-    );
-    private static final List<By> LOGIN_ERRORS = List.of(
-            By.xpath(
-                    "//*[contains(normalize-space(.), 'Hata Kodu:') "
-                            + "and not(.//*[contains(normalize-space(.), 'Hata Kodu:')])]"
-            ),
-            By.xpath("//*[normalize-space()='Beklenmeyen bir hata oluştu.']"),
-            By.cssSelector("[role='alert']"),
-            By.cssSelector("[data-test-id*='error']"),
-            By.cssSelector("[class*='errorMessage'], [class*='alert']")
-    );
+import static com.virgosol.hepsiburada.locators.HepsiburadaLocators.Authentication.EMAIL_INPUT;
+import static com.virgosol.hepsiburada.locators.HepsiburadaLocators.Authentication.LOGIN_BUTTON;
+import static com.virgosol.hepsiburada.locators.HepsiburadaLocators.Authentication.LOGIN_ERRORS;
+import static com.virgosol.hepsiburada.locators.HepsiburadaLocators.Authentication.PASSWORD_INPUT;
+import static com.virgosol.hepsiburada.locators.HepsiburadaLocators.Authentication.SECURITY_CHALLENGES;
 
+public final class LoginPage extends BasePage {
     public LoginPage(WebDriver driver, TestConfig config) {
         super(driver, config);
     }
@@ -43,10 +28,10 @@ public final class LoginPage extends BasePage {
         config.assertTrustedUrl(driver.getCurrentUrl(), "Kimlik bilgisi girişi");
         acceptCookiePreferencesIfPresent();
 
-        WebElement emailInput = waitUntilClickable(EMAIL);
+        WebElement emailInput = waitUntilClickable(EMAIL_INPUT);
         typeCredential(emailInput, config.email(), "E-posta");
 
-        WebElement passwordInput = waitUntilClickable(PASSWORD);
+        WebElement passwordInput = waitUntilClickable(PASSWORD_INPUT);
         typeCredential(passwordInput, config.password(), "Şifre");
     }
 
@@ -58,14 +43,9 @@ public final class LoginPage extends BasePage {
         Set<String> handlesBeforeSubmit = new LinkedHashSet<>(driver.getWindowHandles());
         NoSuchWindowException submitWindowClosure = null;
 
-        WebElement loginButton = waitUntilClickable(LOGIN_BUTTON);
-
         try {
-            System.out.println(
-                    "[BİLGİ] E-posta ve şifre yazıldı; Giriş yap öncesi 1 saniye bekleniyor."
-            );
             new Actions(driver).pause(Duration.ofSeconds(1)).perform();
-            click(loginButton, LOGIN_BUTTON);
+            clickWithoutScrolling(LOGIN_BUTTON);
         } catch (NoSuchWindowException closedDuringSubmit) {
             submitWindowClosure = closedDuringSubmit;
         }
@@ -96,13 +76,13 @@ public final class LoginPage extends BasePage {
                     throw new AssertionError("Hepsiburada giriş isteğini reddetti: " + error);
                 }
 
-                boolean formVisible = anyDisplayed(EMAIL, PASSWORD, LOGIN_BUTTON);
+                boolean formVisible = anyDisplayed(EMAIL_INPUT, PASSWORD_INPUT, LOGIN_BUTTON);
                 boolean loginUrl = isLoginUrl(currentUrl);
                 Object readyState = javascript.executeScript("return document.readyState;");
                 boolean documentReady = "interactive".equals(readyState)
                         || "complete".equals(readyState);
                 return !formVisible && !loginUrl && documentReady ? true : null;
-            }, EMAIL, LOGIN_BUTTON);
+            }, EMAIL_INPUT, LOGIN_BUTTON);
         } catch (AssertionError loginFailure) {
             if (submitWindowClosure != null) {
                 loginFailure.addSuppressed(submitWindowClosure);

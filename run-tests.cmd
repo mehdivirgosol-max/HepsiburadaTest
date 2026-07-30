@@ -26,15 +26,13 @@ if errorlevel 1 (
   goto finish
 )
 
-echo [BILGI] Proje derleniyor ve Gauge kutuphaneleri hazirlaniyor...
 call mvn -q clean test-compile
 if errorlevel 1 (
   set "EXIT_CODE=%errorlevel%"
   goto finish
 )
 
-echo [BILGI] Gauge senaryosu baslatiliyor...
-gauge run --verbose specs\hepsiburada-shopping.spec
+gauge run specs\hepsiburada-shopping.spec
 set "EXIT_CODE=%errorlevel%"
 
 :finish

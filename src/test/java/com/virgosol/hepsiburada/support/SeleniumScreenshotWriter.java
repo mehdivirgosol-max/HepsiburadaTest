@@ -14,6 +14,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Base64;
+
+import static com.virgosol.hepsiburada.locators.HepsiburadaLocators.Authentication.EMAIL_INPUT;
+import static com.virgosol.hepsiburada.locators.HepsiburadaLocators.Authentication.PASSWORD_INPUT;
 import java.util.UUID;
 
 public final class SeleniumScreenshotWriter implements CustomScreenshotWriter {
@@ -67,7 +70,7 @@ public final class SeleniumScreenshotWriter implements CustomScreenshotWriter {
         }
 
         try {
-            for (By locator : new By[]{By.id("txtUserName"), By.id("txtPassword")}) {
+            for (By locator : new By[]{EMAIL_INPUT, PASSWORD_INPUT}) {
                 for (WebElement field : driver.findElements(locator)) {
                     javascript.executeScript(
                             "arguments[0].value = ''; arguments[0].setAttribute('value', '');",

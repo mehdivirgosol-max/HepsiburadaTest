@@ -5,7 +5,6 @@ import com.virgosol.hepsiburada.model.SelectedProduct;
 
 public final class ScenarioState {
     private static final String PRODUCT = "selected-product";
-    private static final String CART_COUNT_BEFORE_ADD = "cart-count-before-add";
     private static final String ADD_ATTEMPTED = "add-attempted";
     private static final String CART_CLEANED = "cart-cleaned";
 
@@ -22,18 +21,6 @@ public final class ScenarioState {
             throw new IllegalStateException("Senaryo için henüz bir ürün kaydedilmedi.");
         }
         return selectedProduct;
-    }
-
-    public static void saveCartCountBeforeAdd(int count) {
-        ScenarioDataStore.put(CART_COUNT_BEFORE_ADD, count);
-    }
-
-    public static int cartCountBeforeAdd() {
-        Object count = ScenarioDataStore.get(CART_COUNT_BEFORE_ADD);
-        if (!(count instanceof Integer integer)) {
-            throw new IllegalStateException("Sepete ekleme öncesi sayaç değeri kaydedilmedi.");
-        }
-        return integer;
     }
 
     public static void markAddAttempted() {

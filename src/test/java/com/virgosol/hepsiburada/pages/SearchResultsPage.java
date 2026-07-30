@@ -2,7 +2,6 @@ package com.virgosol.hepsiburada.pages;
 
 import com.virgosol.hepsiburada.config.TestConfig;
 import com.virgosol.hepsiburada.model.SelectedProduct;
-import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.WebDriver;
@@ -17,21 +16,16 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static com.virgosol.hepsiburada.locators.HepsiburadaLocators.Search.RESULT_GRID_CARDS;
+import static com.virgosol.hepsiburada.locators.HepsiburadaLocators.Search.SEARCH_HEADER;
+import static com.virgosol.hepsiburada.locators.HepsiburadaLocators.Search.SEARCH_INPUT;
+
 public final class SearchResultsPage extends BasePage {
     private static final int SAME_ROW_TOLERANCE_PX = 20;
     private static final int SAME_COLUMN_TOLERANCE_PX = 25;
     private static final Duration GRID_STABILITY_DURATION = Duration.ofSeconds(3);
     private static final Duration BEFORE_SCROLL_PAUSE = Duration.ofSeconds(1);
     private static final Duration AFTER_SCROLL_PAUSE = Duration.ofSeconds(1);
-    private static final By SEARCH_INPUT = By.cssSelector(
-            "input[data-test-id='search-bar-input']"
-    );
-    private static final By SEARCH_HEADER = By.cssSelector(
-            "h1[data-test-id='header-h1']"
-    );
-    private static final By RESULT_GRID_CARDS = By.cssSelector(
-            "main ul[id='1'] > li"
-    );
     private static final String FIND_SECOND_ROW_FIRST_PRODUCT = """
             const grid = document.querySelector("main ul[id='1']");
             if (!grid) {
@@ -202,24 +196,30 @@ public final class SearchResultsPage extends BasePage {
     }
 
     private void enterSearchQuery(String query) {
-        waitFor(config.timeout(), "Arama metni alana yazılamadı", webDriver -> {
-            for (WebElement input : webDriver.findElements(SEARCH_INPUT)) {
-                try {
-                    if (!input.isDisplayed() || !input.isEnabled()) {
-                        continue;
+        WebElement searchInput = waitUntilClickable(SEARCH_INPUT);
+        typeControlled(searchInput, query);
+
+        WebElement populatedSearchInput = waitFor(
+                config.timeout(),
+                "Arama alanı yazılan metni kabul etmedi",
+                webDriver -> {
+                    for (WebElement input : webDriver.findElements(SEARCH_INPUT)) {
+                        try {
+                            String actualValue = input.getDomProperty("value");
+                            if (input.isDisplayed()
+                                    && input.isEnabled()
+                                    && query.equals(actualValue)) {
+                                return input;
+                            }
+                        } catch (StaleElementReferenceException ignored) {
+                            // React input'u yenilerse güncel eşleşme sonraki polling'de aranır.
+                        }
                     }
-                    input.sendKeys(
-                            Keys.chord(Keys.CONTROL, "a"),
-                            query,
-                            Keys.ENTER
-                    );
-                    return true;
-                } catch (StaleElementReferenceException ignored) {
                     return null;
-                }
-            }
-            return null;
-        }, SEARCH_INPUT);
+                },
+                SEARCH_INPUT
+        );
+        populatedSearchInput.sendKeys(Keys.ENTER);
     }
 
     public void verifyResultsFor(String query) {

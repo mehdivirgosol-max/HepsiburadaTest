@@ -1,32 +1,54 @@
-# Güvenli şekilde Hepsiburada hesabına giriş yap
+# Ayrılmış test hesabıyla giriş yap ve kullanıcı bilgisini doğrula
 
-* Tarayıcıyı aç
-* Hepsiburada ana sayfasına git
-* Hesabım alanını aç
-* Giriş yap bağlantısına tıkla
-* Ortam değişkenlerindeki giriş bilgilerini kontrollü hızla doldur
-* Giriş yap düğmesine tıkla
-* Giriş işleminin başarılı olduğunu doğrula
+Bu kavram tarayıcıyı açar, ana sayfanın üst menüsündeki hesap alanından giriş
+formuna ulaşır ve kimlik bilgilerini girer. Form gönderilirken sayfanın scroll
+konumu değiştirilmez. Başarı, giriş formunun kapanmasına ek olarak üst menüde
+oturum açan kullanıcı bilgisinin görünmesiyle doğrulanır.
 
-# <aranan> ara ve ikinci satırdaki ilk ürünü aç
+* Test için Chrome tarayıcısını aç
+* Hepsiburada ana sayfasını aç ve üst menünün yüklenmesini bekle
+* Üst menüdeki Hesabım alanını aç
+* Hesabım menüsündeki Giriş yap bağlantısına tıkla
+* Ortam değişkenlerindeki e-posta ve şifreyi giriş alanlarına kontrollü hızla yaz
+* Sayfayı kaydırmadan görünür Giriş yap düğmesine tıkla
+* Üst menüde oturum açan kullanıcı bilgisinin göründüğünü doğrula
 
-* Arama alanını aç
-* <aranan> metnini ara
-* <aranan> arama sonuçlarının geldiğini doğrula
-* İkinci satırın birinci sütunundaki ürüne kaydır ve başlık bağlantısına tıkla
-* Ürün detay sayfasını kaydedilen ürün kodu veya adıyla doğrula
+# <aranan> ürününü ara, sonuçları doğrula ve ikinci görsel satırın ilk ürününü aç
 
-# Açılan ürünü sepete ekle ve onayı doğrula
+Bu kavram ana sayfanın üst menüsündeki arama alanını kullanır. Alana odaklanınca
+1 saniye bekler, verilen metni yazar ve Enter tuşuyla aramayı başlatır. Sonuç
+ızgarasında reklam veya dinamik kart değişiminden etkilenmemek için ilk iki görsel
+satırın yerleşimi sabitlenene kadar bekler; ardından ikinci satırın en solundaki
+ürünün başlık bağlantısını açar.
 
-* Detay sayfasındaki Sepete Ekle düğmesine tıkla
-* Sepete ekleme bildirimini doğrula ve raporla
+* Üst menüdeki arama alanına tıkla ve yazmadan önce 1 saniye bekle
+* Arama alanına <aranan> yaz ve Enter tuşuyla aramayı başlat
+* <aranan> başlığını ve ürün kartlarını gösteren arama sonuçlarının geldiğini doğrula
+* Görsel ürün ızgarasının ikinci satır birinci sütunundaki ürün başlık bağlantısına kaydırıp tıkla
 
-# Kaydedilen ürünü sepette doğrula
+# Açılan ürün detayından sepete ekle ve bildirim penceresinden sepete git
 
-* Sayfanın en üstüne çık ve header Sepetim alanına tıkla
-* Sepetin boş olmadığını ve kaydedilen ürünü içerdiğini doğrula
-* Sepeti gözlem için "3" saniye açık tut
+Bu kavram ürün detay ekranının tamamen yüklenmesini bekler. Turuncu **Sepete
+ekle** düğmesini görünür alana getirir, dinamik içeriklerin yeniden çizilmesi için
+2 saniye bekler ve güncel butona tıklar. Sepete ekleme isteğinden sonra açılan
+penceredeki **Sepete git** düğmesi tıklanabilir olmadan sonraki adıma geçmez.
+Üst menüdeki sepet bağlantısını kullanmaz ve oraya ulaşmak için yukarı kaydırmaz.
 
-# Testin eklediği ürünü kaldır ve sepeti önceki durumuna döndür
+* Ürün detayındaki Sepete ekle düğmesine tıkla
+* Açılan sepete ekleme penceresindeki Sepete git düğmesine tıkla
 
-* Testin eklediği ürünü kaldır ve sepet sayısını başlangıç değerine döndür
+# Seçilen ürünün sepet listesinde bulunduğunu doğrula
+
+Arama sonucunda seçilirken kaydedilen ürün adı ve ürün kodu sepet satırlarıyla
+karşılaştırılır. Böylece sepette benzer adlı farklı bir ürün bulunması başarılı
+sonuç olarak kabul edilmez.
+
+* Seçilen ürünün sepet listesinde göründüğünü doğrula
+
+# Testin eklediği tek ürün adedini kaldır ve sepeti başlangıç durumuna döndür
+
+Temizlik adımı seçilen ürünün miktarını yalnızca bir adet azaltır. Ürün testten
+önce sepette varsa mevcut satır korunur; test yeni bir satır oluşturduysa yalnızca
+o satır için gereken silme onayı verilir.
+
+* Testin eklediği tek ürün adedini kaldır ve sepet sayısını başlangıç değerine döndür

@@ -2,7 +2,6 @@ package com.virgosol.hepsiburada.pages;
 
 import com.virgosol.hepsiburada.config.TestConfig;
 import com.virgosol.hepsiburada.model.SelectedProduct;
-import org.openqa.selenium.By;
 import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -12,66 +11,30 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.virgosol.hepsiburada.locators.HepsiburadaLocators.Cart.CART_COUNT;
+import static com.virgosol.hepsiburada.locators.HepsiburadaLocators.Cart.CART_ITEMS;
+import static com.virgosol.hepsiburada.locators.HepsiburadaLocators.Cart.CART_LIVE_REGION;
+import static com.virgosol.hepsiburada.locators.HepsiburadaLocators.Cart.CONFIRM_REMOVE;
+import static com.virgosol.hepsiburada.locators.HepsiburadaLocators.Cart.DECREASE_WITHIN_CART_ITEM;
+import static com.virgosol.hepsiburada.locators.HepsiburadaLocators.Cart.EMPTY_CART;
+import static com.virgosol.hepsiburada.locators.HepsiburadaLocators.Cart.PRODUCT_LINKS;
+import static com.virgosol.hepsiburada.locators.HepsiburadaLocators.Cart.REMOVE_WITHIN_CART_ITEM;
+import static com.virgosol.hepsiburada.locators.HepsiburadaLocators.Common.PAGE_BODY;
+
 public final class CartPage extends BasePage {
+    private static final String CART_URL = "https://checkout.hepsiburada.com/sepetim";
     private static final Pattern CART_ITEM_COUNT = Pattern.compile(
             "\\bsepetim\\s+(\\d+)\\s+urun\\b"
     );
-    private static final By CART_COUNT = By.cssSelector(
-            "#basket-item-count, #cartItemCount"
-    );
-    private static final By CART_LIVE_REGION = By.cssSelector(
-            "[aria-live='polite'][aria-busy]"
-    );
-    private static final By PRODUCT_LINKS = By.cssSelector(
-            "li[class*='basket_items_'] [class*='product_name_'] a[href],"
-                    + "li[class*='basket_items_'] a[href*='-p-'],"
-                    + "[class*='basket_item_'] [class*='product_name_'] a[href],"
-                    + "[data-test-id='cart-item'] a[href*='-p-'],"
-                    + "[data-test-id='product-item'] a[href*='-p-'],"
-                    + "[data-test-id*='basket-item'] a[href*='-p-']"
-    );
-    private static final By CART_ITEMS = By.cssSelector(
-            "li[class*='basket_items_'],"
-                    + "[class*='basket_item_'],"
-                    + "[data-test-id='cart-item'],"
-                    + "[data-test-id='product-item'],"
-                    + "[data-test-id*='basket-item'],"
-                    + "main [class*='CartItem'],"
-                    + "main [class*='cartItem'],"
-                    + "main [class*='product_item']"
-    );
-    private static final By EMPTY_CART = By.cssSelector(
-            "[data-test-id='empty-cart'],"
-                    + "[data-test-id='empty-basket'],"
-                    + "[class*='EmptyCart'],"
-                    + "[class*='emptyCart']"
-    );
-    private static final By DECREASE_WITHIN_CART_ITEM = By.cssSelector(
-            "a[aria-label='Ürünü Azalt'],"
-                    + "button[aria-label='Ürünü Azalt'],"
-                    + "a[aria-label*='Azalt'],"
-                    + "button[aria-label*='Azalt']"
-    );
-    private static final By REMOVE_WITHIN_CART_ITEM = By.cssSelector(
-            "a[aria-label='Sepetten Çıkar'],"
-                    + "button[aria-label='Sepetten Çıkar'],"
-                    + "a[class*='trash_button_'],"
-                    + "button[class*='trash_button_']"
-    );
-    private static final By CONFIRM_REMOVE = By.xpath(
-            "//button[contains(@class, 'favoritesButton_') "
-                    + "and @kind='secondary' and normalize-space()='Sil']"
-                    + " | //*[@role='dialog']//*[self::button or self::a]["
-                    + "normalize-space()='Sil' or "
-                    + "normalize-space()='Ürünü sil' or "
-                    + "normalize-space()='Evet, sil' or "
-                    + "normalize-space()='Evet']"
-                    + " | //*[contains(@class, 'favoritesContainer_')]"
-                    + "//*[self::button or self::a][normalize-space()='Sil']"
-    );
-
     public CartPage(WebDriver driver, TestConfig config) {
         super(driver, config);
+    }
+
+    public void open() {
+        config.assertTrustedUrl(CART_URL, "Sepet temizliği");
+        driver.get(CART_URL);
+        waitForDocumentReady();
+        waitUntilLoaded();
     }
 
     public void waitUntilLoaded() {
@@ -106,25 +69,16 @@ public final class CartPage extends BasePage {
         }
     }
 
-    public void removeOneUnitAndRestoreCount(
-            SelectedProduct selectedProduct,
-            int expectedCount
-    ) {
+    public void removeOneUnit(SelectedProduct selectedProduct) {
         Integer currentCount = waitFor(
                 config.timeout(),
                 "Sepet ürün sayısı okunamadı",
                 webDriver -> visibleCartItemCount()
         );
-        if (currentCount == expectedCount) {
-            return;
+        if (currentCount < 1) {
+            throw new AssertionError("Sepette azaltılabilecek ürün bulunamadı.");
         }
-        if (currentCount != expectedCount + 1) {
-            throw new AssertionError(
-                    "Sepet sayısı beklenmeyen değerde; ürün miktarı değiştirilmeyecek. "
-                            + "Beklenen mevcut sayı: " + (expectedCount + 1)
-                            + ", gerçek sayı: " + currentCount
-            );
-        }
+        int expectedCount = currentCount - 1;
 
         CartAdjustment adjustment = waitFor(
                 config.timeout(),
@@ -136,24 +90,21 @@ public final class CartPage extends BasePage {
         click(adjustment.control());
 
         if (adjustment.removesLine()) {
-            if (!waitForItemCount(Duration.ofSeconds(1), expectedCount)
-                    && !tryClick(Duration.ofSeconds(3), CONFIRM_REMOVE)) {
+            boolean confirmationClicked = tryClick(
+                    Duration.ofSeconds(3),
+                    CONFIRM_REMOVE
+            );
+            if (!confirmationClicked
+                    && !waitForItemCount(Duration.ofSeconds(1), expectedCount)) {
                 throw new AssertionError(
                         "Miktarı 1 olan ürün için Sil onayı bulunamadı."
                 );
             }
-            System.out.println(
-                    "[BİLGİ] Ürün miktarı 1 olduğu için ürün satırı sepetten silindi."
-            );
-        } else {
-            System.out.println(
-                    "[BİLGİ] Ürün miktarı 1'den fazla olduğu için yalnızca bir adet azaltıldı."
-            );
         }
-        verifyItemCount(expectedCount);
+        waitUntilItemCountEquals(expectedCount);
     }
 
-    public void verifyItemCount(int expectedCount) {
+    private void waitUntilItemCountEquals(int expectedCount) {
         waitFor(config.timeout(), "Sepet ürün sayısı başlangıç değerine dönmedi", webDriver -> {
             if (expectedCount == 0 && isEmptyStateVisible()) {
                 return true;
@@ -161,15 +112,6 @@ public final class CartPage extends BasePage {
             Integer actualCount = visibleCartItemCount();
             return actualCount != null && actualCount == expectedCount ? true : null;
         });
-    }
-
-    public void verifyEmpty() {
-        waitFor(config.timeout(), "Sepetin boş olduğu doğrulanamadı", webDriver ->
-                isEmptyStateVisible() ? true : null, EMPTY_CART, CART_COUNT);
-    }
-
-    public void observe(int seconds) {
-        observeForSeconds(seconds);
     }
 
     private WebElement findMatchingProductLink(SelectedProduct selectedProduct) {
@@ -270,7 +212,7 @@ public final class CartPage extends BasePage {
 
     private Integer visibleCartItemCount() {
         try {
-            String bodyText = normalizeText(driver.findElement(By.tagName("body")).getText());
+            String bodyText = normalizeText(driver.findElement(PAGE_BODY).getText());
             Matcher matcher = CART_ITEM_COUNT.matcher(bodyText);
             return matcher.find() ? Integer.parseInt(matcher.group(1)) : null;
         } catch (RuntimeException ignored) {
@@ -285,7 +227,7 @@ public final class CartPage extends BasePage {
 
         String bodyText;
         try {
-            bodyText = normalizeText(driver.findElement(By.tagName("body")).getText());
+            bodyText = normalizeText(driver.findElement(PAGE_BODY).getText());
         } catch (RuntimeException exception) {
             return false;
         }
